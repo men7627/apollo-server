@@ -1,10 +1,13 @@
 // 1. 'apollo-server'를 불러옴
 const {ApolloServer} = require('apollo-server')
+const {GraphQLScalarType} = require('graphql')
 
 const typeDefs = `
+	scalar DateTime
+
 	type Query {
 		totalPhotos: Int!
-		allPhotos: [Photo!]!
+		allPhotos(after: DateTime): [Photo!]!
 	}
 
 	type Mutation {
@@ -18,6 +21,8 @@ const typeDefs = `
 		description: String
 		category: PhotoCategory!
 		postedBy: User!
+		taggedUsers: [User!]!
+		created: DateTime!
 	}
 
 	type User {
@@ -25,6 +30,7 @@ const typeDefs = `
 		name: String
 		avatar: String
 		postedPhotos: [Photo!]!
+		inPhotos: [Photo!]!
 	}
 
 	enum PhotoCategory {
@@ -41,7 +47,6 @@ const typeDefs = `
 		description: String
 	}
 `
-
 var _id = 0
 var photos = [
 	{
@@ -49,21 +54,24 @@ var photos = [
 		name: 'one',
 		description: 'this is one',
 		category: 'ACTION',
-		githubUser: 'gPlake'
+		githubUser: 'gPlake',
+		created: "3-28-1899"
 	},
 	{
 		id: '2',
 		name: 'two',
 		description: 'this is two',
 		category: 'LANDSCAPE',
-		githubUser: 'sSchmidt'
+		githubUser: 'sSchmidt',
+		created: '1-2-1985'
 	},
 	{
 		id: '3',
 		name: 'three',
 		description: 'this is three',
 		category: 'SELFIE',
-		githubUser: 'mHattrup'
+		githubUser: 'mHattrup',
+		created: '2021-08-11T19:00:13'
 	}
 ]
 
@@ -82,33 +90,52 @@ var users = [
 	}	
 ]
 
+var tags = [
+	{ photoID: '1', userID: 'gPlake'},
+	{ photoID: '2', userID: 'sSchmidt'},
+	{ photoID: '2', userID: 'mHattrup'},
+	{ photoID: '2', userID: 'gPlake'}
+]
+
 
 const resolvers = {
 	Query: {
 		totalPhotos: () => photos.length,
-		allPhotos: () => photos
+		allPhotos: (parent, args) => photos.filter(photo => new Date(photo.created) > args.after)
 	},
 
 	Mutation: {
 		postPhoto (parent, args) {
 			var newPhoto = {
 				id: _id++,
+				created: new Date(),
 				...args.input
 			}
 			photos.push(newPhoto)
-
 			return newPhoto
 		}
 	},
 
 	Photo: {
 		url: parent => `http://yoursite.com/img/${parent.id}.jpg`,
-		postedBy: parent => users.find(user => user.githubLogin === parent.githubUser)
+		postedBy: parent => users.find(user => user.githubLogin === parent.githubUser),
+		taggedUsers: parent => tags.filter(tag => tag.photoID === parent.id)
+									.map(tag => users.find(u => u.githubLogin === tag.userID))							
 	},
 
 	User: {
-		postedPhotos: parent => photos.filter(photo => photo.githubUser === parent.githubLogin)
-	}
+		postedPhotos: parent => photos.filter(photo => photo.githubUser === parent.githubLogin),
+		inPhotos: parent => tags.filter(tag => tag.userID === parent.githubLogin)
+								.map(tag => photos.find(photo => photo.id === tag.photoID))
+	},
+
+	DateTime: new GraphQLScalarType({
+		name: 'DateTime',
+		description: 'A valid date time value.',
+		parseValue: value => new Date(value),
+		serialize: value => new Date(value).toISOString(),
+		parseLiteral: ast => new Date(ast.value)
+	})
 }
 
 // 서버 인스턴스 새로 생성
