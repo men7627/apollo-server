@@ -1,5 +1,5 @@
-// 1. 'apollo-server'를 불러옴
-const {ApolloServer} = require('apollo-server')
+const {ApolloServer} = require('apollo-server-express')
+const express = require('express')
 const {GraphQLScalarType} = require('graphql')
 
 const typeDefs = `
@@ -138,14 +138,24 @@ const resolvers = {
 	})
 }
 
+//express app 생성
+var app = express()
+
 // 서버 인스턴스 새로 생성
 // typeDefs(스키마)와 리졸버를 객체에 넣어 전달
-const server = new ApolloServer({
-	typeDefs,
-	resolvers
-})
+const server = new ApolloServer({typeDefs,resolvers})
+
+async () => {
+	(await server.start())
+
+	//미들웨어가 같은 경로에 마운트되도록 함
+	server.applyMiddleware({app})
+}
+
+//홈 라우트 생성
+app.get('/', (req, res) => res.end('welcome PhotoShare API'))
 
 // 웹 서버를 구동하기 위해 listen 메서드를 호출
-server
-	.listen()
-	.then(({url}) => console.log(`GraphQL Service running on ${url}`))
+app.listen({port: 4000}, () => 
+	console.log(`GraphQL Server running @ http://localhost:4000${server.graphqlPath}`)
+)
