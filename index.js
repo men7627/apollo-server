@@ -1,6 +1,7 @@
 const {ApolloServer} = require('apollo-server-express')
 const express = require('express')
 const {GraphQLScalarType} = require('graphql')
+const expressPlayground = require('graphql-playground-middleware-express').default
 
 const typeDefs = `
 	scalar DateTime
@@ -152,8 +153,11 @@ async () => {
 	server.applyMiddleware({app})
 }
 
-//홈 라우트 생성
+//홈 라우트
 app.get('/', (req, res) => res.end('welcome PhotoShare API'))
+
+//플레이 그라운드 라우트
+app.get('/playground', expressPlayground({ endpoint: '/graphql'}))
 
 // 웹 서버를 구동하기 위해 listen 메서드를 호출
 app.listen({port: 4000}, () => 
