@@ -2,9 +2,12 @@ const { ApolloServer } = require('apollo-server-express')
 const express = require('express')
 const expressPlayground = require('graphql-playground-middleware-express').default
 const { readFileSync } = require('fs')
+const { MongoClient } = require('mongodb')
+require('dotenv').config()
 
 const typeDefs = readFileSync('./typeDefs.graphql', 'UTF-8')
 const resolvers = require('./resolvers')
+
 
 var _id = 0
 var photos = [
@@ -58,15 +61,27 @@ var tags = [
 
 async function start() {
 	//express app 생성
-	var app = express()
+	const app = express()
+	const MONGO_DB = process.env.DB_HOST
+
+	const client = await MongoClient.connect(
+		MONGO_DB,
+		{ useNewUrlParser: true }
+	)
+	const db = client.db()
+
+	const context = { db }
 
 	// 서버 인스턴스 새로 생성
 	// typeDefs(스키마)와 리졸버를 객체에 넣어 전달
 	const server = new ApolloServer({ typeDefs, resolvers })
 
+	async () => {
+		(await server.start())
 
-	//미들웨어가 같은 경로에 마운트되도록 함
-	server.applyMiddleware({ app })
+		//미들웨어가 같은 경로에 마운트되도록 함
+		server.applyMiddleware({ app })
+	}
 
 	//홈 라우트
 	app.get('/', (req, res) => res.end('welcome PhotoShare API'))
