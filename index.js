@@ -31,9 +31,9 @@ async function start() {
 		typeDefs,
 		resolvers,
 		context: async ({ req }) => {
-			// const githubToken = req.headers.authorization
-			// const currentUser = await db.collection('users').findOne({ githubToken })
-			return { db }
+			const githubToken = req.headers.authorization
+			const currentUser = await db.collection('users').findOne({ githubToken })
+			return { db, currentUser }
 		}
 	})
 
