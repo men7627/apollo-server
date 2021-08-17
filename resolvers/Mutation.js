@@ -1,21 +1,24 @@
 const { authorizeWithGithub } = require("../lib")
 
 module.exports = {
-    postPhoto(parent, args) {
-        var newPhoto = {
-            id: _id++,
-            created: new Date(),
-            ...args.input
+    async postPhoto(parent, args, { db, currentUser }) {
+        if(!currentUser) {
+            throw new Error("only an authorized user can post a photo");
         }
-        photos.push(newPhoto)
+
+        const newPhoto = {
+            ...args.input,
+            userID: currentUser.githubLogin,
+            created: new Date(),
+            
+        }
+        
+        await db.collection("photos").insert(newPhoto)
+
         return newPhoto
     },
 
     async githubAuth (parent, { code }, { db }) {
-
-        console.log('******************')
-        console.log('db:' + db)
-        console.log('******************')
         //1. auth request
         let {
             message,
