@@ -15,7 +15,7 @@ module.exports = {
         }
 
         await db.collection("photos").insert(newPhoto)
-        
+
         return newPhoto
     },
 
