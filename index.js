@@ -6,6 +6,7 @@ const expressPlayground = require('graphql-playground-middleware-express').defau
 const resolvers = require('./resolvers')
 const { createServer } = require('http')
 const path = require('path')
+const depthLimit = require('graphql-depth-limit')
 
 require('dotenv').config()
 var typeDefs = readFileSync('./typeDefs.graphql', 'UTF-8')
@@ -34,6 +35,7 @@ async function start() {
 	const server = new ApolloServer({
 		typeDefs,
 		resolvers,
+		validationRules: [depthLimit(3)],
 		context: async ({ req, connection }) => {
 
 			//Mutation, Query는 HTTP를 사용하므로 이들 요청은 request 인자를 그대로 사용
@@ -79,7 +81,7 @@ async function start() {
 	//웹소켓 subscription 기능 사용할 때 필요한 핸들러가 아폴로 서버에 추가
 	server.installSubscriptionHandlers(httpServer)
 
-	server.timeout = 5000
+	httpServer.timeout = 5000
 
 	httpServer.listen({ port: 4000 }, () =>
 		console.log(`GraphQL Server running at localhost:4000${server.graphqlPath}`)
