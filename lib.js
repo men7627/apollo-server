@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const fs = require('fs')
 
 //auth and get userinfo
 const authorizeWithGithub = async credentials => {
@@ -30,4 +31,15 @@ const requestGithubUserAccount = token =>
     })
         .then(res => res.json())
 
-module.exports = { authorizeWithGithub }
+const uploadStream = (stream, path) =>
+    new Promise((resolve, reject) => {
+        stream.on('error', error => {
+            if (stream.truncated) {
+                fs.unlinkSync(path)
+            }
+            reject(error)
+        }).on('end', resolve)
+            .pipe(fs.createWriteStream(path))
+    })
+
+module.exports = { authorizeWithGithub, uploadStream }

@@ -1,4 +1,3 @@
-
 module.exports = {
     newPhoto: {
         subscribe: (parent, args, { pubsub }) =>

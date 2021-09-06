@@ -5,6 +5,7 @@ const { readFileSync } = require('fs')
 const expressPlayground = require('graphql-playground-middleware-express').default
 const resolvers = require('./resolvers')
 const { createServer } = require('http')
+const path = require('path')
 
 require('dotenv').config()
 var typeDefs = readFileSync('./typeDefs.graphql', 'UTF-8')
@@ -55,6 +56,11 @@ async function start() {
 		subscriptionEndpoint: '/graphql'
 	}))
 
+	app.use(
+		'/img/photos',
+		express.static(path.join(__dirname, 'assets', 'photos'))
+	)
+
 	// app.get('/', (req, res) => {
 	// 	let url = `https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}&scope=user`
 	// 	res.end(`<a href="${url}">Sign In with Github</a>`)
@@ -72,6 +78,8 @@ async function start() {
 	//웹소켓 구동
 	//웹소켓 subscription 기능 사용할 때 필요한 핸들러가 아폴로 서버에 추가
 	server.installSubscriptionHandlers(httpServer)
+
+	server.timeout = 5000
 
 	httpServer.listen({ port: 4000 }, () =>
 		console.log(`GraphQL Server running at localhost:4000${server.graphqlPath}`)
