@@ -35,7 +35,12 @@ async function start() {
 	const server = new ApolloServer({
 		typeDefs,
 		resolvers,
-		validationRules: [depthLimit(3)],
+		validationRules: [
+			depthLimit(5),
+			createComplexityLimitRule(1000, {
+				onCost: cost => console.log('query cost: ', cost)
+			})
+		],
 		context: async ({ req, connection }) => {
 
 			//Mutation, Query는 HTTP를 사용하므로 이들 요청은 request 인자를 그대로 사용
